@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cluster Bubble Chart</title>
+
+    <link rel="stylesheet" href="static/styles.css" />
+</head>
+
+<body>
+    <svg id="bubble-chart"></svg>
+    <div class="tooltip">
+        <img alt="" />
+        <div>
+            <a></a>
+            <span></span>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v6.js"></script>
+    <script>
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        const file = "{{url_for('static', filename='clusterBubbleData.json')}}"
+        console.log(file)
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        fetch(file)
+            .then((response) => response.json())
+            .then((json) => console.log(json));
+
+        const generateChart = data => {
+            console.log(data)
+            const bubble = data => d3.pack()
+                .size([width, height])
+                .padding(2)(d3.hierarchy({ children: data }).sum(d => d.score));
+
+            const svg = d3.select('#bubble-chart')
+                .style('width', width)
+                .style('height', height);
+
+            const root = bubble(data);
+            const tooltip = d3.select('.tooltip');
+
+            const node = svg.selectAll()
+                .data(root.children)
+                .enter().append('g')
+                .attr('transform', `translate(${width / 2}, ${height / 2})`);
+
+            const circle = node.append('circle')
+                .style('fill', d => getRandomColor())
+                .on('mouseover', function (e, d) {
+                    //tooltip.select('a').attr('href', d.data.link).text(d.data.name);
+                    tooltip.select('a').attr('href', d.data.name).text(d.data.name);
+                    tooltip.select('span').attr('class', d.data.name).text(d.data.name);
+                    tooltip.style('visibility', 'visible');
+
+                    d3.select(this).style('stroke', '#222');
+                })
+                .on('mousemove', e => tooltip.style('top', `${e.pageY}px`)
+                    .style('left', `${e.pageX + 10}px`))
+                .on('mouseout', function () {
+                    d3.select(this).style('stroke', 'none');
+                    return tooltip.style('visibility', 'hidden');
+                })
+                .on('click', (e, d) => window.open("/cluster/" + d.data.name));
+
+            const label = node.append('text')
+                .attr('dy', 2)
+                .text(d => d.data.name.substring(0, d.r / 3));
+
+            node.transition()
+                .ease(d3.easeExpInOut)
+                .duration(1000)
+                .attr('transform', d => `translate(${d.x}, ${d.y})`);
+
+            circle.transition()
+                .ease(d3.easeExpInOut)
+                .duration(1000)
+                .attr('r', d => d.r);
+
+            label.transition()
+                .delay(700)
+                .ease(d3.easeExpInOut)
+                .duration(1000)
+                .style('opacity', 1)
+        };
+
+        (async () => {
+            data = await d3.json(file).then(data => data);
+            generateChart(data);
+        })();
+    </script>
+</body>
+
+</html>

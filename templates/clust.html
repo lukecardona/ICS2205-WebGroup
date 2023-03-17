@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document List</title>
+    <base href="http://127.0.0.1:5000/">
+    <script src="/static/lib/d3.js" charset="utf-8"></script>
+    <script src="/static/lib/d3.layout.cloud.js"></script>
+    <script src="/static/lib/d3.wordcloud.js"></script>
+    <!-- <script src="/static/lib/example.words.js"></script> -->
+</head>
+
+<body>
+    <div id='wordcloud'></div>
+
+    {% if data %}
+    <ol>
+        {% for articleIndex in data["listOfArticles"] %}
+        <li><a href={{articleIndex}}>{{data["listOfArticles"][articleIndex]["headline"]}}</a></li>
+        {% endfor %}
+    </ol>
+    {% endif %}
+
+    <!-- <script src="https://d3js.org/d3.v6.js"></script> -->
+    <script>
+        var data2 = '{{ keywordData | tojson}}'
+        var data3 = JSON.parse(data2)
+        console.log(data3)
+        d3.wordcloud()
+            .size([500, 400])
+            .fill(d3.scale.ordinal().range(["#884400", "#448800", "#888800", "#444400"]))
+            .words(data3)
+            .onwordclick(function (d, i) {
+                console.log("cool")
+            })
+            .start();
+    </script>
+
+    <!-- <script>
+        console.log(words)
+        d3.wordcloud()
+            .size([500, 300])
+            .fill(d3.scale.ordinal().range(["#884400", "#448800", "#888800", "#444400"]))
+            .words(words)
+            .onwordclick(function (d, i) {
+                if (d.href) { window.location = d.href; }
+            })
+            .start();
+    </script> -->
+</body>
+
+</html>
